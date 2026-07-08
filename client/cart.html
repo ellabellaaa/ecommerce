@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Cart</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    nav { background: #333; padding: 10px; margin-bottom: 20px; }
+    nav a { color: white; text-decoration: none; margin-right: 15px; }
+    .item { background: white; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+    .item button { padding: 6px 12px; background: red; color: white; border: none; cursor: pointer; }
+    .total { font-size: 18px; font-weight: bold; margin: 15px 0; }
+    .order-btn { padding: 10px 20px; background: green; color: white; border: none; cursor: pointer; font-size: 16px; }
+    .msg { padding: 8px; margin-bottom: 10px; display: none; }
+    .success { background: #d4edda; color: green; display: block; }
+    .error { background: #f8d7da; color: red; display: block; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/index.html">Home</a>
+    <a href="/cart.html">Cart</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </nav>
+
+  <h2>My Cart</h2>
+  <div id="msg" class="msg"></div>
+  <div id="cartItems"></div>
+  <div id="cartTotal" style="display:none">
+    <div class="total">Total: $<span id="total">0</span></div>
+    <button class="order-btn" onclick="placeOrder()">Place Order</button>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login.html';
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    }
+
+    function showMsg(text, type) {
+      const msg = document.getElementById('msg');
+      msg.textContent = text;
+      msg.className = `msg ${type}`;
+      setTimeout(() => msg.className = 'msg', 3000);
+    }
+
+    async function loadCart() {
+      const res = await fetch('/api/cart', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const items = await res.json();
+      const container = document.getElementById('cartItems');
+      container.innerHTML = '';
+
+      if (items.length === 0) {
+        container.innerHTML = '<p>Your cart is empty. <a href="/index.html">Shop now</a></p>';
+        return;
+      }
+
+      let total = 0;
+      items.forEach(item => {
+        total += item.price * item.quantity;
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <div>
+            <strong>${item.name}</strong>
+            <p>Qty: ${item.quantity} | Price: $${item.price}</p>
+          </div>
+          <button onclick="removeItem(${item.id})">Remove</button>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('total').textContent = total.toFixed(2);
+      document.getElementById('cartTotal').style.display = 'block';
+    }
+
+    async function removeItem(id) {
+      const res = await fetch(`/api/cart/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) { showMsg('Item removed', 'success'); loadCart(); }
+    }
+
+    async function placeOrder() {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showMsg('Order placed successfully!', 'success');
+        setTimeout(() => loadCart(), 1500);
+      } else {
+        showMsg(data.message, 'error');
+      }
+    }
+
+    loadCart();
+  </script>
+</body>
+</html>

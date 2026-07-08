@@ -7,11 +7,13 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const logToFile = require('./middleware/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(morgan('dev'));
+app.use(logToFile);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client')));
 

@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const register = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -31,7 +31,7 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = await createUser(username, email, hashedPassword, role || 'user');
+    const newUser = await createUser(username, email, hashedPassword, 'user');
 
     res.status(201).json({ message: 'User registered successfully', user: newUser });
   } catch (err) {

@@ -15,7 +15,7 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'Username must be at least 3 characters' });
     }
 
-    if (!email.includes('@')) {
+    if (!email.includes('@') || !email.includes('.')) {
       return res.status(400).json({ message: 'Please enter a valid email' });
     }
 
